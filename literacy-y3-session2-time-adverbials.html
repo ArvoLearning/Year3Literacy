@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Word Explorers – Session 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sky-day:   #6ec6ff;
+  --sky-eve:   #ff9e7d;
+  --sky-night: #4b4f9e;
+  --sun:       #ffd23f;
+  --moon:      #f4f1de;
+  --grass:     #7bc96f;
+  --purple:    #9b59d0;
+  --pink:      #ff7ab8;
+  --orange:    #ff8c42;
+  --teal:      #2ec4b6;
+  --red:       #ff5d5d;
+  --ink:       #2b2440;
+  --cream:     #fffaf0;
+  --card:      #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Quicksand', sans-serif;
+  background: linear-gradient(180deg, var(--sky-day) 0%, #a8e0ff 35%, #c7ecc0 100%);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* floating clouds */
+.cloud {
+  position: fixed; z-index: 0; opacity: .8; pointer-events: none;
+  font-size: 2.5rem; animation: drift linear infinite;
+}
+@keyframes drift {
+  from { transform: translateX(-10vw); }
+  to   { transform: translateX(110vw); }
+}
+
+#app {
+  position: relative; z-index: 1;
+  max-width: 1000px; margin: 0 auto;
+  padding: 24px 18px 80px;
+}
+
+/* ── HEADER: SUNRISE BANNER ── */
+.sun-header {
+  background: linear-gradient(135deg, #ffe27a, var(--sun));
+  border-radius: 28px;
+  border: 5px solid white;
+  padding: 22px 26px;
+  margin-bottom: 22px;
+  box-shadow: 0 10px 0 rgba(0,0,0,.08), 0 16px 30px rgba(0,0,0,.15);
+  position: relative; overflow: hidden;
+  animation: riseUp .7s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes riseUp { from{opacity:0;transform:translateY(-30px) scale(.9)} to{opacity:1;transform:none} }
+
+.sun-header::after {
+  content: '☀️'; position: absolute; right: -10px; top: -20px;
+  font-size: 7rem; opacity: .18; transform: rotate(15deg);
+}
+
+.sh-row { display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
+.sh-badge {
+  flex-shrink: 0; background: white; border-radius: 50%;
+  width: 76px; height: 76px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 4px solid var(--ink); box-shadow: 3px 3px 0 rgba(0,0,0,.15);
+}
+.sh-badge .sb-num { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.9rem; color: var(--orange); line-height: 1; }
+.sh-badge .sb-of { font-size: .55rem; font-weight: 700; color: #888; }
+.sh-text { flex: 1; }
+.sh-text .sh-eyebrow { font-family: 'Baloo 2', sans-serif; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8a5a00; margin-bottom: 4px; }
+.sh-text h1 { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: clamp(1.5rem, 4.6vw, 2.5rem); color: var(--ink); line-height: 1.1; }
+.sh-text .sh-sub { font-size: .85rem; font-weight: 600; color: #6b5300; margin-top: 6px; }
+.sh-icon { flex-shrink: 0; font-size: 3rem; }
+
+/* ── NAV: TIME-OF-DAY BUTTONS ── */
+.day-nav {
+  display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap;
+  animation: riseUp .8s .1s cubic-bezier(.34,1.56,.64,1) both;
+}
+.dn-btn {
+  flex: 1; min-width: 95px;
+  background: white; border: 4px solid var(--ink); border-radius: 18px;
+  padding: 10px 8px; cursor: pointer; transition: all .22s;
+  font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .8rem;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--ink);
+}
+.dn-btn .dn-icon { font-size: 1.5rem; }
+.dn-btn.active {
+  background: var(--purple); color: white; transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 6px 0 rgba(0,0,0,.15);
+}
+.dn-btn:hover:not(.active) { background: #fff3da; transform: translateY(-2px); }
+
+/* ── PANEL CARD ── */
+.day-panel {
+  background: var(--card); border-radius: 26px; border: 5px solid white;
+  box-shadow: 0 10px 0 rgba(0,0,0,.06), 0 14px 30px rgba(0,0,0,.15);
+  display: none; overflow: hidden;
+  animation: panelPop .4s ease both;
+}
+.day-panel.active { display: block; }
+@keyframes panelPop { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
+
+.dp-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 24px; color: white;
+}
+.dp-header.h0 { background: linear-gradient(120deg, var(--orange), var(--sun)); }
+.dp-header.h1 { background: linear-gradient(120deg, var(--purple), #c084e8); }
+.dp-header.h2 { background: linear-gradient(120deg, var(--teal), #5fe0d0); }
+.dp-header.h3 { background: linear-gradient(120deg, var(--pink), #ffa8d6); }
+.dp-header.h4 { background: linear-gradient(120deg, var(--sky-night), #7a7ed0); }
+
+.dp-icon {
+  width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.25);
+  display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+  flex-shrink: 0; border: 3px solid white;
+}
+.dp-title h2 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.25rem; }
+.dp-title p { font-size: .78rem; opacity: .92; margin-top: 2px; }
+.dp-time { margin-left: auto; flex-shrink: 0; background: rgba(255,255,255,.25); border-radius: 20px; padding: 5px 14px; font-size: .74rem; font-weight: 700; }
+
+.dp-body { padding: 26px; }
+
+/* ── HOOK: MISSING TIME PUZZLE ── */
+.missing-box {
+  background: #fff3da; border: 4px dashed var(--orange); border-radius: 20px;
+  padding: 22px; margin-bottom: 18px; text-align: center;
+}
+.missing-box .mb-label { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--orange); margin-bottom: 12px; }
+.missing-box .mb-sentence {
+  font-family: 'Baloo 2', sans-serif; font-size: 1.6rem; color: var(--ink);
+  background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px;
+  border: 3px solid var(--ink); display: inline-block;
+}
+.missing-box .mb-question { font-size: .95rem; font-weight: 700; color: var(--purple); margin-bottom: 12px; }
+.when-options { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.when-opt {
+  background: var(--teal); color: white; border: none; border-radius: 16px;
+  padding: 10px 18px; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .9rem;
+  cursor: pointer; transition: all .2s;
+}
+.when-opt:hover { transform: scale(1.08); background: #25a89a; }
+.mb-celebrate {
+  display: none; margin-top: 14px; background: #e0f9e0; border: 3px solid var(--grass);
+  border-radius: 14px; padding: 12px; font-weight: 700; font-size: .9rem; color: #2e7d32;
+}
+.mb-celebrate.show { display: block; animation: panelPop .3s ease; }
+
+/* ── LI / SC ── */
+.li-cloud { background: #e3f2ff; border: 4px solid var(--ink); border-radius: 20px; padding: 16px 20px; margin-bottom: 16px; position: relative; }
+.li-cloud .li-tag { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .9rem; color: var(--sky-night); margin-bottom: 6px; }
+.li-cloud p { font-size: .9rem; font-weight: 600; line-height: 1.6; }
+
+.sc-cloud { background: #e0f9e0; border: 4px solid var(--ink); border-radius: 20px; padding: 16px 20px; margin-bottom: 18px; }
+.sc-cloud .sc-tag { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .9rem; color: #2e7d32; margin-bottom: 10px; }
+.sc-item3 { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: .88rem; font-weight: 600; line-height: 1.5; }
+.sc-check3 {
+  width: 24px; height: 24px; border: 3px solid var(--grass); border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .2s; font-size: .8rem; margin-top: 1px; background: white;
+}
+.sc-check3.done { background: var(--grass); color: white; }
+
+/* ── ADVERBIAL DEFINITION ── */
+.def-card {
+  background: #f5edff; border: 4px solid var(--purple); border-radius: 20px;
+  padding: 18px 22px; margin-bottom: 18px;
+}
+.def-card h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.15rem; color: var(--purple); margin-bottom: 8px; }
+.def-card p { font-size: .9rem; line-height: 1.6; font-weight: 600; }
+
+/* ── CLOCK WORD WHEEL ── */
+.clock-wheel-wrap {
+  background: #fff8e8; border: 4px solid var(--ink); border-radius: 20px;
+  padding: 22px; margin-bottom: 18px; text-align: center;
+}
+.clock-wheel-wrap h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.15rem; margin-bottom: 16px; color: var(--orange); }
+.time-words-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 10px; }
+@media(max-width:600px){ .time-words-grid { grid-template-columns: repeat(2,1fr); } }
+.tw-chip {
+  background: white; border: 3px solid var(--ink); border-radius: 16px;
+  padding: 12px 8px; cursor: pointer; transition: all .2s;
+  font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .82rem;
+}
+.tw-chip:hover { transform: translateY(-3px) rotate(-2deg); box-shadow: 3px 4px 0 var(--ink); }
+.tw-chip.picked { background: var(--sun); }
+.tw-chip .tw-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+
+/* ── EXPANDING SENTENCE DEMO ── */
+.expand-demo {
+  background: #e8fff5; border: 4px solid var(--teal); border-radius: 20px;
+  padding: 20px; margin-bottom: 18px;
+}
+.expand-demo h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--teal); margin-bottom: 14px; }
+.base-bubble {
+  background: white; border: 3px solid var(--ink); border-radius: 16px;
+  padding: 12px 18px; font-family: 'Baloo 2', sans-serif; font-size: 1.2rem;
+  text-align: center; margin-bottom: 14px; display: inline-block;
+}
+.expand-options { display: flex; flex-direction: column; gap: 10px; }
+.expand-opt {
+  background: white; border: 3px solid var(--ink); border-radius: 14px;
+  padding: 12px 16px; cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: 10px;
+}
+.expand-opt:hover { background: #f0fffa; transform: translateX(4px); }
+.expand-opt .eo-pos {
+  background: var(--teal); color: white; border-radius: 10px; padding: 2px 8px;
+  font-size: .65rem; font-weight: 700; flex-shrink: 0;
+}
+.expand-opt .eo-text { font-family: 'Baloo 2', sans-serif; font-size: 1.05rem; }
+.expand-opt .eo-text .added { background: var(--sun); padding: 1px 6px; border-radius: 6px; }
+
+/* ── GUIDED PRACTICE ── */
+.gp3-item {
+  background: #fff; border: 4px solid var(--ink); border-radius: 20px;
+  padding: 20px; margin-bottom: 16px; position: relative;
+}
+.gp3-item .gp3-tag {
+  position: absolute; top: -16px; left: 16px;
+  background: var(--pink); color: white;
+  font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .85rem;
+  padding: 4px 14px; border-radius: 16px; border: 3px solid var(--ink);
+}
+.gp3-sentence {
+  font-family: 'Baloo 2', sans-serif; font-size: 1.3rem; text-align: center;
+  margin: 14px 0; padding: 12px; background: #fafafa; border-radius: 12px;
+}
+.gp3-prompt { font-size: .85rem; font-weight: 700; color: var(--purple); text-align: center; margin-bottom: 12px; }
+.gp3-options { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.gp3-opt {
+  background: var(--teal); color: white; border: none; border-radius: 16px;
+  padding: 8px 16px; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .85rem;
+  cursor: pointer; transition: all .2s;
+}
+.gp3-opt:hover { transform: scale(1.06); }
+.gp3-opt.used { background: #ccc; cursor: not-allowed; }
+.gp3-result {
+  display: none; text-align: center; font-family: 'Baloo 2', sans-serif; font-size: 1.15rem;
+  background: #e0f9e0; border: 3px solid var(--grass); border-radius: 14px; padding: 14px;
+  margin-top: 10px; color: #2e7d32;
+}
+.gp3-result.show { display: block; animation: panelPop .35s ease; }
+.gp3-result .added-word { background: var(--sun); padding: 2px 8px; border-radius: 8px; }
+
+.star-track {
+  display: flex; justify-content: center; gap: 8px; margin-bottom: 18px;
+}
+.star-slot { font-size: 1.8rem; opacity: .25; transition: all .3s; }
+.star-slot.lit { opacity: 1; transform: scale(1.15); }
+
+/* ── INDIVIDUAL TASK ── */
+.individual-card {
+  background: #fff0f7; border: 4px solid var(--pink); border-radius: 20px;
+  padding: 20px; margin-bottom: 16px;
+}
+.individual-card h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--pink); margin-bottom: 10px; }
+.time-bank { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.tb-chip {
+  background: white; border: 2.5px solid var(--ink); border-radius: 14px;
+  padding: 5px 12px; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .78rem;
+  cursor: pointer; transition: all .15s;
+}
+.tb-chip:hover { background: var(--sun); }
+
+/* ── WRAP-UP ── */
+.recap3 {
+  background: linear-gradient(120deg, var(--sky-night), #7a7ed0); color: white;
+  border-radius: 20px; padding: 20px; margin-bottom: 18px; text-align: center;
+}
+.recap3 .r3-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.recap3 h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 6px; }
+.recap3 p { font-size: .85rem; opacity: .92; line-height: 1.5; }
+
+.hw3-card { background: #fff3da; border: 4px solid var(--ink); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+.hw3-card h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 12px; color: var(--orange); }
+.hw3-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; font-size: .87rem; font-weight: 600; line-height: 1.5; }
+.hw3-step .hs3-num {
+  width: 26px; height: 26px; background: var(--ink); color: var(--sun);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .85rem; flex-shrink: 0;
+}
+
+.final-checklist3 { background: #e0f9e0; border: 4px solid var(--ink); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+.final-checklist3 h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 12px; color: #2e7d32; }
+.fc3-row { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; margin-bottom: 9px; font-size: .87rem; font-weight: 600; line-height: 1.5; }
+.fc3-box { width: 22px; height: 22px; border: 3px solid var(--grass); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: .75rem; transition: all .2s; margin-top: 1px; background:white; }
+.fc3-box.ticked { background: var(--grass); color: white; }
+
+.finish3 {
+  display: none; background: linear-gradient(120deg, var(--purple), var(--pink)); color: white;
+  border-radius: 20px; padding: 24px; text-align: center; border: 4px solid white;
+}
+.finish3.show { display: block; animation: panelPop .4s ease; }
+.finish3 .f3-icon { font-size: 2.8rem; margin-bottom: 10px; }
+.finish3 h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 8px; }
+.finish3 p { font-size: .88rem; line-height: 1.6; opacity: .95; }
+
+/* ── WHITEBOARD ── */
+.wb3 { background: white; border: 3px dashed var(--ink); border-radius: 16px; padding: 14px; margin-top: 14px; }
+.wb3 label { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .85rem; color: var(--purple); display: block; margin-bottom: 6px; }
+.wb3 textarea { width: 100%; border: none; resize: vertical; outline: none; font-family: 'Baloo 2', sans-serif; font-size: 1.05rem; color: var(--ink); min-height: 70px; line-height: 1.8; }
+.wb3 textarea::placeholder { color: #bbb; font-family: 'Quicksand', sans-serif; font-size: .85rem; }
+
+/* ── NAV FOOTER ── */
+.nav-foot3 { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+.nav-btn3 {
+  background: white; color: var(--ink); border: 4px solid var(--ink);
+  border-radius: 18px; padding: 11px 24px; font-family: 'Baloo 2', sans-serif;
+  font-weight: 700; font-size: 1rem; cursor: pointer; transition: all .2s;
+  box-shadow: 0 5px 0 rgba(0,0,0,.15);
+}
+.nav-btn3:hover { transform: translateY(-2px); }
+.nav-btn3:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.15); }
+.nav-btn3:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+.nav-btn3.next { background: var(--purple); color: white; }
+.step-counter3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: .82rem; color: #5a5a7a; }
+</style>
+</head>
+<body>
+
+<div class="cloud" style="top:6%; font-size:2rem; animation-duration:48s;">☁️</div>
+<div class="cloud" style="top:16%; font-size:1.4rem; animation-duration:65s; animation-delay:-20s;">☁️</div>
+<div class="cloud" style="top:3%; font-size:1.8rem; animation-duration:55s; animation-delay:-10s;">☁️</div>
+
+<div id="app">
+
+  <!-- ══════ HEADER ══════ -->
+  <div class="sun-header">
+    <div class="sh-row">
+      <div class="sh-badge">
+        <div class="sb-num">2</div>
+        <div class="sb-of">OF 12</div>
+      </div>
+      <div class="sh-text">
+        <div class="sh-eyebrow">⏰ Time Word Explorers · Literacy Adventure</div>
+        <h1>When Did It Happen?</h1>
+        <div class="sh-sub">Year 3 · 50 minutes · Using Time Words (Adverbials) in Sentences</div>
+      </div>
+      <div class="sh-icon">🕐</div>
+    </div>
+  </div>
+
+  <!-- ══════ NAV ══════ -->
+  <nav class="day-nav">
+    <button class="dn-btn active" onclick="goTo(0)"><span class="dn-icon">🌅</span>START</button>
+    <button class="dn-btn" onclick="goTo(1)"><span class="dn-icon">🕐</span>LEARN</button>
+    <button class="dn-btn" onclick="goTo(2)"><span class="dn-icon">🧩</span>PRACTICE</button>
+    <button class="dn-btn" onclick="goTo(3)"><span class="dn-icon">✏️</span>MY TURN</button>
+    <button class="dn-btn" onclick="goTo(4)"><span class="dn-icon">🌙</span>FINISH</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- PANEL 0 · HOOK + LI/SC                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="day-panel active" id="d0">
+    <div class="dp-header h0">
+      <div class="dp-icon">🌅</div>
+      <div class="dp-title">
+        <h2>WARM-UP — WHAT'S MISSING?</h2>
+        <p>A little mystery about lunch!</p>
+      </div>
+      <span class="dp-time">⏱ 0–5 min</span>
+    </div>
+    <div class="dp-body">
+
+      <div class="missing-box">
+        <div class="mb-label">🔍 SOMETHING'S MISSING…</div>
+        <div class="mb-sentence">"I ate lunch."</div>
+        <div class="mb-question">🤔 This sentence doesn't tell us... WHEN?! Pick a time word to fix it:</div>
+        <div class="when-options">
+          <button class="when-opt" onclick="pickWhen(this,'today')">today</button>
+          <button class="when-opt" onclick="pickWhen(this,'at noon')">at noon</button>
+          <button class="when-opt" onclick="pickWhen(this,'yesterday')">yesterday</button>
+          <button class="when-opt" onclick="pickWhen(this,'in the afternoon')">in the afternoon</button>
+        </div>
+        <div class="mb-celebrate" id="mbCelebrate"></div>
+      </div>
+
+      <div class="li-cloud">
+        <div class="li-tag">🎯 LEARNING INTENTION</div>
+        <p>I am learning to use <strong>simple adverbials for time</strong> (like "in the afternoon") in my sentences.</p>
+      </div>
+
+      <div class="sc-cloud">
+        <div class="sc-tag">✅ SUCCESS CRITERIA — I can…</div>
+        <div class="sc-item3">
+          <div class="sc-check3" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"> </div>
+          <span>Add a <strong>time word or phrase</strong> to a sentence to answer the question "When?"</span>
+        </div>
+        <div class="sc-item3">
+          <div class="sc-check3" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"> </div>
+          <span>Place my time word at the <strong>beginning</strong> OR the <strong>end</strong> of a sentence.</span>
+        </div>
+        <div class="sc-item3">
+          <div class="sc-check3" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"> </div>
+          <span>Write my own sentences using <strong>two different</strong> time words.</span>
+        </div>
+        <p style="font-size:.74rem;margin-top:6px;color:#2e7d32;">💡 Tick each one as you get more confident!</p>
+      </div>
+
+      <div class="wb3">
+        <label>📝 Quick Think</label>
+        <textarea placeholder="Write your own sentence about lunch — but THIS time, tell us when you ate it!"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- PANEL 1 · DIRECT INSTRUCTION                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="day-panel" id="d1">
+    <div class="dp-header h1">
+      <div class="dp-icon">🕐</div>
+      <div class="dp-title">
+        <h2>LEARN — TIME WORDS</h2>
+        <p>Discovering words that answer "When?"</p>
+      </div>
+      <span class="dp-time">⏱ 5–20 min</span>
+    </div>
+    <div class="dp-body">
+
+      <div class="def-card">
+        <h3>🧠 What's an Adverbial?</h3>
+        <p>An <strong>adverbial</strong> is a word or phrase that tells us <strong>more about the verb</strong> (the action). A <strong>time adverbial</strong> tells us <strong>WHEN</strong> the action happened!</p>
+      </div>
+
+      <div class="clock-wheel-wrap">
+        <h3>⏰ TIME WORD COLLECTION — Click to Collect!</h3>
+        <div class="time-words-grid" id="timeWordsGrid"></div>
+        <p style="font-size:.78rem;color:#888;font-weight:600;margin-top:8px;">Click each word to add it to your collection! 🌟</p>
+      </div>
+
+      <div class="expand-demo">
+        <h3>🌱 WATCH A SENTENCE GROW!</h3>
+        <div style="text-align:center;">
+          <div class="base-bubble">I played outside.</div>
+        </div>
+        <p style="text-align:center;font-size:.85rem;font-weight:700;color:var(--teal);margin-bottom:10px;">👇 Click each version to see how the time word fits in:</p>
+        <div class="expand-options">
+          <div class="expand-opt" onclick="this.classList.toggle('chosen')">
+            <span class="eo-pos">END</span>
+            <span class="eo-text">I played outside <span class="added">today</span>.</span>
+          </div>
+          <div class="expand-opt" onclick="this.classList.toggle('chosen')">
+            <span class="eo-pos">END</span>
+            <span class="eo-text">I played outside <span class="added">in the afternoon</span>.</span>
+          </div>
+          <div class="expand-opt" onclick="this.classList.toggle('chosen')">
+            <span class="eo-pos">START</span>
+            <span class="eo-text"><span class="added">Yesterday</span>, I played outside.</span>
+          </div>
+        </div>
+        <p style="font-size:.82rem;font-weight:700;text-align:center;margin-top:12px;color:var(--purple);">✨ Time words can go at the START or the END of a sentence!</p>
+      </div>
+
+      <div class="wb3">
+        <label>📝 Grow Your Own Sentence</label>
+        <textarea placeholder="Take the sentence 'The cat slept.' and add a time word — try it at the START, then try it at the END!"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- PANEL 2 · GUIDED PRACTICE                     -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="day-panel" id="d2">
+    <div class="dp-header h2">
+      <div class="dp-icon">🧩</div>
+      <div class="dp-title">
+        <h2>PRACTICE — ADD THE TIME!</h2>
+        <p>Help finish these sentences with time words</p>
+      </div>
+      <span class="dp-time">⏱ 20–35 min</span>
+    </div>
+    <div class="dp-body">
+
+      <div class="star-track" id="starTrack"></div>
+
+      <div class="gp3-item">
+        <div class="gp3-tag">🐦 Sentence 1</div>
+        <div class="gp3-sentence">"The birds sang ___."</div>
+        <div class="gp3-prompt">When did the birds sing? Pick a time word!</div>
+        <div class="gp3-options" id="gp3opts1"></div>
+        <div class="gp3-result" id="gp3res1"></div>
+      </div>
+
+      <div class="gp3-item">
+        <div class="gp3-tag">🌳 Sentence 2</div>
+        <div class="gp3-sentence">"We will go to the park ___."</div>
+        <div class="gp3-prompt">When will we go? Pick a time word!</div>
+        <div class="gp3-options" id="gp3opts2"></div>
+        <div class="gp3-result" id="gp3res2"></div>
+      </div>
+
+      <div class="gp3-item">
+        <div class="gp3-tag">📺 Sentence 3</div>
+        <div class="gp3-sentence">"I watch TV ___."</div>
+        <div class="gp3-prompt">When do you watch TV? Pick a time word!</div>
+        <div class="gp3-options" id="gp3opts3"></div>
+        <div class="gp3-result" id="gp3res3"></div>
+      </div>
+
+      <div class="wb3">
+        <label>📝 Your Favourite Sentence</label>
+        <textarea placeholder="Write out your favourite completed sentence from above, all by yourself!"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- PANEL 3 · INDIVIDUAL TASK                     -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="day-panel" id="d3">
+    <div class="dp-header h3">
+      <div class="dp-icon">✏️</div>
+      <div class="dp-title">
+        <h2>MY TURN — TWO TIME SENTENCES</h2>
+        <p>Write two sentences, each with a different time word</p>
+      </div>
+      <span class="dp-time">⏱ 35–45 min</span>
+    </div>
+    <div class="dp-body">
+
+      <div class="individual-card">
+        <h3>🌟 Sentence 1 — Pick an Action + a Time Word</h3>
+        <p style="font-size:.85rem;color:#556;margin-bottom:10px;">Need ideas? Click a time word to copy it into your sentence:</p>
+        <div class="time-bank">
+          <div class="tb-chip" onclick="copyToWb(this,'wbS1')">today</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS1')">in the morning</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS1')">at night</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS1')">last week</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS1')">soon</div>
+        </div>
+        <div class="wb3" style="margin-top:0;">
+          <label>✍️ Write Sentence 1</label>
+          <textarea id="wbS1" placeholder="I rode my bike in the morning."></textarea>
+        </div>
+      </div>
+
+      <div class="individual-card">
+        <h3>🌟 Sentence 2 — Use a DIFFERENT Time Word</h3>
+        <p style="font-size:.85rem;color:#556;margin-bottom:10px;">Try a different one this time!</p>
+        <div class="time-bank">
+          <div class="tb-chip" onclick="copyToWb(this,'wbS2')">tomorrow</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS2')">in the afternoon</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS2')">later</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS2')">next year</div>
+          <div class="tb-chip" onclick="copyToWb(this,'wbS2')">yesterday</div>
+        </div>
+        <div class="wb3" style="margin-top:0;">
+          <label>✍️ Write Sentence 2</label>
+          <textarea id="wbS2" placeholder="Yesterday, I helped my mum bake a cake."></textarea>
+        </div>
+      </div>
+
+      <div style="background:#e3f2ff;border:4px solid var(--ink);border-radius:18px;padding:16px 20px;">
+        <p style="font-size:.85rem;font-weight:700;line-height:1.6;">✅ <strong>Self-check:</strong> Does each sentence tell us WHEN something happened? Did you use a DIFFERENT time word in each one?</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- PANEL 4 · WRAP-UP                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="day-panel" id="d4">
+    <div class="dp-header h4">
+      <div class="dp-icon">🌙</div>
+      <div class="dp-title">
+        <h2>FINISH — WRAP-UP &amp; HOMEWORK</h2>
+        <p>You're a Time Word Explorer now!</p>
+      </div>
+      <span class="dp-time">⏱ 45–50 min</span>
+    </div>
+    <div class="dp-body">
+
+      <div class="recap3">
+        <div class="r3-icon">⏰</div>
+        <h3>You're making your stories clear about WHEN things happen!</h3>
+        <p>Time words help your reader picture the moment — morning, night, today, or long ago.</p>
+      </div>
+
+      <div class="hw3-card">
+        <h3>📚 HOMEWORK — TIME WORD HUNT</h3>
+        <div class="hw3-step"><div class="hs3-num">1</div><span>Find a recount or story you've already written.</span></div>
+        <div class="hw3-step"><div class="hs3-num">2</div><span>Read through your sentences and look for ones missing a time word.</span></div>
+        <div class="hw3-step"><div class="hs3-num">3</div><span>Add a simple time adverbial to make it clearer — like "in the morning" or "later".</span></div>
+        <div class="hw3-step"><div class="hs3-num">4</div><span>Bring your favourite new sentence to share next time!</span></div>
+      </div>
+
+      <div class="final-checklist3">
+        <h3>✅ MY CHECKLIST — Tick what you can do!</h3>
+        <div class="fc3-row" onclick="tickFc3(this)"><div class="fc3-box">✓</div><span>I know what a time adverbial is (a word that tells us WHEN).</span></div>
+        <div class="fc3-row" onclick="tickFc3(this)"><div class="fc3-box">✓</div><span>I can think of lots of different time words.</span></div>
+        <div class="fc3-row" onclick="tickFc3(this)"><div class="fc3-box">✓</div><span>I can add a time word to the START of a sentence.</span></div>
+        <div class="fc3-row" onclick="tickFc3(this)"><div class="fc3-box">✓</div><span>I can add a time word to the END of a sentence.</span></div>
+        <div class="fc3-row" onclick="tickFc3(this)"><div class="fc3-box">✓</div><span>I wrote my own sentences using two different time words.</span></div>
+      </div>
+
+      <div class="finish3" id="finish3">
+        <div class="f3-icon">🌟⏰🌟</div>
+        <h3>TIME WORD EXPLORER BADGE EARNED!</h3>
+        <p>Session 2 of 12 complete! You now know how to tell your reader exactly WHEN things happen. See you next session, Explorer!</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NAV FOOTER -->
+  <div class="nav-foot3">
+    <button class="nav-btn3" id="prevBtn" onclick="navigate(-1)" disabled>← BACK</button>
+    <span class="step-counter3" id="stepCounter">PART 1 OF 5</span>
+    <button class="nav-btn3 next" id="nextBtn" onclick="navigate(1)">NEXT →</button>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ── NAV ── */
+let cur = 0;
+const N = 5;
+
+function goTo(n) {
+  document.querySelectorAll('.day-panel').forEach((p,i) => {
+    p.classList.toggle('active', i===n);
+    if (i===n) { p.style.animation='none'; void p.offsetWidth; p.style.animation=''; }
+  });
+  document.querySelectorAll('.dn-btn').forEach((b,i) => b.classList.toggle('active', i===n));
+  cur = n;
+  document.getElementById('prevBtn').disabled = n===0;
+  document.getElementById('nextBtn').disabled = n===N-1;
+  document.getElementById('stepCounter').textContent = `PART ${n+1} OF ${N}`;
+  window.scrollTo({top:0, behavior:'smooth'});
+  if (n===1) initTimeWords();
+  if (n===2) initGP3();
+}
+function navigate(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+
+/* ── HOOK ── */
+function pickWhen(btn, word) {
+  document.querySelectorAll('.when-opt').forEach(b => b.style.opacity = .5);
+  btn.style.opacity = 1;
+  btn.style.background = '#25a89a';
+  const cel = document.getElementById('mbCelebrate');
+  cel.innerHTML = `🎉 <strong>"I ate lunch ${word}."</strong> — Now we know exactly WHEN! That little word makes a big difference.`;
+  cel.classList.add('show');
+}
+
+/* ── TIME WORD COLLECTION ── */
+const timeWords = [
+  {w:'today', i:'📅'}, {w:'yesterday', i:'⏪'}, {w:'tomorrow', i:'⏩'}, {w:'now', i:'⏱️'},
+  {w:'later', i:'⌛'}, {w:'soon', i:'🔜'}, {w:'in the morning', i:'🌅'}, {w:'in the afternoon', i:'🌤️'},
+  {w:'at night', i:'🌙'}, {w:'last week', i:'📆'}, {w:'next year', i:'🗓️'}, {w:'this evening', i:'🌆'}
+];
+function initTimeWords() {
+  const grid = document.getElementById('timeWordsGrid');
+  if (grid.children.length) return;
+  timeWords.forEach(tw => {
+    const chip = document.createElement('div');
+    chip.className = 'tw-chip';
+    chip.innerHTML = `<span class="tw-icon">${tw.i}</span>${tw.w}`;
+    chip.onclick = () => chip.classList.toggle('picked');
+    grid.appendChild(chip);
+  });
+}
+
+/* ── GUIDED PRACTICE ── */
+const gp3Data = [
+  { id: 1, base: 'The birds sang', opts: ['in the morning','at dawn','today'], correct: ['in the morning','at dawn','today'] },
+  { id: 2, base: 'We will go to the park', opts: ['tomorrow','soon','next week'], correct: ['tomorrow','soon','next week'] },
+  { id: 3, base: 'I watch TV', opts: ['at night','in the evening','later'], correct: ['at night','in the evening','later'] }
+];
+let gp3Score = 0;
+
+function initGP3() {
+  const track = document.getElementById('starTrack');
+  if (!track.children.length) {
+    for (let i=0;i<3;i++) {
+      const s = document.createElement('span');
+      s.className = 'star-slot'; s.id = 'star'+i; s.textContent = '⭐';
+      track.appendChild(s);
+    }
+  }
+  gp3Data.forEach(item => {
+    const wrap = document.getElementById('gp3opts'+item.id);
+    if (wrap.children.length) return;
+    item.opts.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'gp3-opt'; b.textContent = opt;
+      b.onclick = () => answerGP3(item, opt, b);
+      wrap.appendChild(b);
+    });
+  });
+}
+
+let gp3Answered = {};
+function answerGP3(item, opt, btn) {
+  if (gp3Answered[item.id]) return;
+  gp3Answered[item.id] = true;
+  document.querySelectorAll(`#gp3opts${item.id} .gp3-opt`).forEach(b => b.classList.add('used'));
+  btn.style.background = 'var(--grass)';
+  const res = document.getElementById('gp3res'+item.id);
+  res.innerHTML = `✅ "${item.base} <span class="added-word">${opt}</span>." Great! Now we know WHEN!`;
+  res.classList.add('show');
+  gp3Score++;
+  document.getElementById('star'+(gp3Score-1)).classList.add('lit');
+}
+
+/* ── COPY TO WHITEBOARD ── */
+function copyToWb(chip, wbId) {
+  const wb = document.getElementById(wbId);
+  if (!wb.value.includes(chip.textContent)) {
+    wb.value = (wb.value.trim() ? wb.value.trim() + ' ' : '') + chip.textContent + ' ';
+  }
+  wb.focus();
+}
+
+/* ── FINAL CHECKLIST ── */
+function tickFc3(row) {
+  const box = row.querySelector('.fc3-box');
+  box.classList.toggle('ticked');
+  const ticked = document.querySelectorAll('#d4 .fc3-box.ticked').length;
+  if (ticked >= 4) document.getElementById('finish3').classList.add('show');
+}
+</script>
+</body>
+</html>
